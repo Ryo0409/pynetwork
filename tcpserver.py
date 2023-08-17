@@ -1,42 +1,57 @@
 # -*- coding : UTF-8 -*-
 
 import socket
+import threading
 
-server_ip = "127.0.0.1"
-server_port = 8080
-listen_num = 5
-buffer_size = 1024
-
-
-tcp_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-tcp_server.bind((server_ip, server_port))
-
-tcp_server.listen(listen_num)
+SERVER_PORT = 8080
+LISTEN_NUM = 2
+BUFFER_SIZE = 1024
 
 
-connection,address = tcp_server.accept()
-print("[*] Connection open [ Source : {}]".format(address))
+def connection_handle(connection, address):
 
-while True:
+    while True:
 
-    try:
+        try:
 
-        data = connection.recv(buffer_size)
+            data = connection.recv(BUFFER_SIZE)
 
-        if data:
-           print("[*] Received Data : {}".format(data))
+            if data:
+                print("[*] Received Data from {} : {}".format(address,data))
 
-        connection.send(b"ACK")
+            connection.send(b"ACK")
 
-    except BrokenPipeError:
+        except BrokenPipeError:
 
-        connection.close()
-        print("Connection closed")
-        break
+            connection.close()
+            print("[*] Connection from {} closed".format(address))
+            break
 
-    except KeyboardInterrupt:
 
-        connection.close()
-        print("Server terminated")
-        break
+def main():
+
+    tcp_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    tcp_server.bind((socket.gethostname(), SERVER_PORT))
+
+    tcp_server.listen(LISTEN_NUM)
+
+    while True:
+
+        try:
+
+            connection,address = tcp_server.accept()
+            print("[*] Connection from {} open".format(address))
+
+            connection_thread = threading.Thread(target=connection_handle, args=(connection, address))
+            connection_thread.start()
+
+        except KeyboardInterrupt:
+
+            connection.close()
+            print("[*] Server terminated")
+            exit()
+
+if __name__ == "__main__":
+
+    main()
