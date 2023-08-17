@@ -16,7 +16,10 @@ while True:
        message = input(">")
 
        if not message:
-          continue
+           continue
+
+       if message.replace(' ', '') == '':
+           continue
 
        tcp_client.send(message.encode())
 
