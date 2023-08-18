@@ -5,7 +5,7 @@ import threading
 import subprocess
 
 SERVER_PORT = 8080
-LISTEN_NUM = 2
+LISTEN_NUM = 5
 BUFFER_SIZE = 4096
 
 
@@ -21,7 +21,7 @@ def command_handler(connection, address):
 
                 print("[*] Received command from {} : {}".format(address,command))
 
-                process = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+                process = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=120)
 
                 connection.send(process.stdout.encode())
 
@@ -29,7 +29,8 @@ def command_handler(connection, address):
 
                 connection.send(b"Received any commands")
 
-        except BrokenPipeError:
+        except:
+        #except BrokenPipeError:
 
             connection.close()
 
@@ -53,12 +54,11 @@ def main():
             connection,address = tcp_server.accept()
             print("[*] Connection from {} open".format(address))
 
-            connection_thread = threading.Thread(target=command_handler, args=(connection, address))
+            connection_thread = threading.Thread(target=command_handler, args=(connection, address), daemon=True)
             connection_thread.start()
 
         except KeyboardInterrupt:
 
-            connection.close()
             print("[*] Server terminated")
             exit()
 
